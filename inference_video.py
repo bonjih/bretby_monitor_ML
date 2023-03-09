@@ -36,10 +36,9 @@ OUT_DIR = r'C:\bretby_monitor\saved_videos'
 
 
 def read_return_video(video_path):
-    # source 10.61.41.4 can set RST in the TCP header if TCP sees congestion
-    try:
-        cap = cv2.VideoCapture(video_path)
 
+    try:
+        cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
         # get the first frame
         _, old_frame = cap.read()
         old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
@@ -48,6 +47,7 @@ def read_return_video(video_path):
         frame_height = int(cap.get(4))
         assert (frame_width != 0 and frame_height != 0), 'Please check video path...'
         return cap, frame_width, frame_height, old_frame, old_gray
+
     except Exception as e:
         print(e)
 
@@ -86,7 +86,6 @@ def main(cam_name, camID):
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
     detection_threshold = threshold
-
     cap, frame_width, frame_height, old_frame, old_gray = read_return_video(camID)
 
     # Save Video
@@ -106,6 +105,7 @@ def main(cam_name, camID):
     t0 = time.time()
 
     while cap.isOpened():
+
         # capture each frame of the video
         ret, frame = cap.read()
 
