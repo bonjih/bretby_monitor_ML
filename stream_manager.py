@@ -5,10 +5,7 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import json
-import subprocess
 import time
-
 import cv2
 
 from inference_video import inf_run
@@ -25,12 +22,10 @@ def probe_stream(video_path, cam_name):
         inf_run(cam_name, video_path)
 
     elif not result:
-        # assumes if there is no stream from a single camera, all cameras do not work.
-        # all streams are from the same server, means issue with server.
+        # assumes if there is no stream from a single camera, all cameras do not work, (appears to be the case)
+        # all streams are from the same server, means issue with the server.
         from main import main
         print(f"Camera {cam_name} not available, restarting main in 61 seconds.....")
         time.sleep(61)
         print('Restarting main........')
         main()
-
-
