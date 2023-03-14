@@ -12,11 +12,12 @@ import torch
 import time
 import yaml
 
+from testing import VideoCaptureTreading
 import global_conf_variables
-from bretby_flow import bret_flow
 from model.models.create_fasterrcnn_model import create_model
 from model.utils.annotations import inference_annotations, annotate_fps
 from model.utils.transforms import infer_transforms, resize
+from bretby_flow import bret_flow_run3
 from utils.save_vid import vid_save
 
 values = global_conf_variables.get_values()
@@ -36,7 +37,6 @@ OUT_DIR = r'C:\bretby_monitor\saved_videos'
 
 
 def read_return_video(video_path):
-
     try:
         cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
         # get the first frame
@@ -52,7 +52,7 @@ def read_return_video(video_path):
         print(e)
 
 
-def main(cam_name, camID):
+def main(cam_name, source):
     # For same annotation colors each time.
     np.random.seed(42)
 
@@ -86,7 +86,7 @@ def main(cam_name, camID):
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
     detection_threshold = threshold
-    cap, frame_width, frame_height, old_frame, old_gray = read_return_video(camID)
+    cap, frame_width, frame_height, old_frame, old_gray = read_return_video(source)
 
     # Save Video
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -104,7 +104,7 @@ def main(cam_name, camID):
 
     t0 = time.time()
 
-    while cap.isOpened():
+    while True:
 
         # capture each frame of the video
         ret, frame = cap.read()
@@ -147,9 +147,12 @@ def main(cam_name, camID):
             # only if there are detected boxes.
             if len(outputs[0]['boxes']) != 0:
                 frame, x, y = inference_annotations(outputs, detection_threshold, CLASSES, COLORS, orig_frame, frame)
-                bret_flow(frame, old_frame, old_gray, cam_name, x, y)
 
+                if len(x) != 0 and len(x) != 0:
+                    bret_flow_run3(orig_frame, old_gray, old_frame, cam_name, x, y)
+                    pass
             else:
+
                 frame = orig_frame
 
             frame = annotate_fps(frame, fps)

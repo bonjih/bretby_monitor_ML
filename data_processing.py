@@ -154,7 +154,7 @@ def bret_loc_data(df, cam_name, img):
                 save_image(cam_name, img)
                 if not result:
                     df_pass_true = df_pass[df_pass['debris_result'] == True]
-                    save_image(cam_name, img)
+                    save_image(cam_name, img)  # TODO a bug here
 
                     db_fields = config_parser.db_parser()
                     db_manager_controller(df_pass_true, db_fields)

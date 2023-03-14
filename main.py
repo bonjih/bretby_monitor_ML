@@ -18,19 +18,19 @@ cams = values[0]
 
 def main():
     while True:
-        try:
-            df = pd.read_csv(cams)
+        # try:
+        df = pd.read_csv(cams)
 
-            print('Looping through camera list......\n')
+        print('Looping through camera list......\n')
 
-            for index, row in df.iterrows():
-                print(row['cam_name'], '->', row['address'])
+        for index, row in df.iterrows():
+            print(row['cam_name'], '->', row['address'])
 
-                # to check if stream exists
-                probe_stream(row['address'], row['cam_name'])
+            # to check if stream exists
+            probe_stream(row['address'], row['cam_name'])
 
-        except Exception as e:
-            print(e)
+        # except Exception as e:
+        #     print(e)
 
 
 if __name__ == "__main__":
