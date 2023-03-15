@@ -25,7 +25,7 @@ def probe_stream(video_path, cam_name):
         # assumes if there is no stream from a single camera, all cameras do not work, (appears to be the case)
         # all streams are from the same server, means issue with the server.
         from main import main
-        print(f"Camera {cam_name} not available, restarting main in 61 seconds.....")
+        print(f"Camera {cam_name} not available, restarting application in 61 seconds.....")
         time.sleep(61)
-        print('Restarting main........')
+        print('Restarting application........')
         main()
