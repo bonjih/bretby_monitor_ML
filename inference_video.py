@@ -6,17 +6,19 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
+import os
+
+import imutils
 import numpy as np
 import cv2
 import torch
 import time
 import yaml
 
-from testing import VideoCaptureTreading
 import global_conf_variables
 from model.models.create_fasterrcnn_model import create_model
 from model.utils.annotations import inference_annotations, annotate_fps
-from model.utils.transforms import infer_transforms, resize
+from model.utils.transforms import infer_transforms
 from bretby_flow import bret_flow_run3
 from utils.save_vid import vid_save
 
@@ -27,26 +29,40 @@ timer = values[1]
 save_vid = values[2]
 preview_window = values[3]
 
-img_size = None
+img_size = 960
 configs = 'model/data_configs/custom_data.yaml'
-weights = 'model/last_model_state_3032023.pth'
+weights = 'model/last_model_state_15032023.pth'
 threshold = 0.90  # detection threshold - any detection having score below this will be discarded.
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 models = 'fasterrcnn_resnet50_fpn_v2'
 OUT_DIR = r'C:\bretby_monitor\saved_videos'
 
 
-def read_return_video(video_path):
+def read_return_video(video_path, cam_name):
     try:
+        os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
         cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
-        # get the first frame
-        _, old_frame = cap.read()
-        old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
-        frame_width = int(cap.get(3))
-        frame_height = int(cap.get(4))
-        assert (frame_width != 0 and frame_height != 0), 'Please check video path...'
-        return cap, frame_width, frame_height, old_frame, old_gray
+        result = cap.isOpened()
+        if result:
+            # get the first frame
+            _, old_frame = cap.read()
+
+            if img_size is not None:
+                old_frame = imutils.resize(old_frame, width=img_size)
+            else:
+                old_frame = old_frame
+
+            old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
+
+            frame_width = int(cap.get(3))
+            frame_height = int(cap.get(4))
+            assert (frame_width != 0 and frame_height != 0), 'Please check video path...'
+            return cap, frame_width, frame_height, old_frame, old_gray
+
+        else:
+            from stream_manager import probe_stream
+            probe_stream(video_path, cam_name)
 
     except Exception as e:
         print(e)
@@ -86,7 +102,8 @@ def main(cam_name, source):
     COLORS = np.random.uniform(0, 255, size=(len(CLASSES), 3))
 
     detection_threshold = threshold
-    cap, frame_width, frame_height, old_frame, old_gray = read_return_video(source)
+
+    cap, frame_width, frame_height, old_frame, old_gray = read_return_video(source, cam_name)
 
     # Save Video
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -108,6 +125,7 @@ def main(cam_name, source):
 
         # capture each frame of the video
         ret, frame = cap.read()
+        frame = imutils.resize(frame, width=RESIZE_TO)
 
         t1 = time.time()
         time_out = t1 - t0
@@ -117,7 +135,6 @@ def main(cam_name, source):
 
         if ret:
             orig_frame = frame.copy()
-            frame = resize(frame, RESIZE_TO)
             image = frame.copy()
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = infer_transforms(image)
