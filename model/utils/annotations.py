@@ -109,7 +109,7 @@ def inference_annotations(
             cv2.putText(
                 orig_image,
                 final_label,
-                (p1[0] + off_set, p2[1] + 17),
+                (p1[0] + off_set, p2[1] + 9),  # box txt location
                 cv2.FONT_HERSHEY_SIMPLEX,
                 fontScale=lw / 8.8,
                 color=(255, 255, 255),
