@@ -16,9 +16,10 @@ configs = {}
 
 
 def config_parser():
-    with open(r'C:\bretby_monitor\configs.json', 'r') as jsonFile:
+    with open(r'C:\bretby_monitor_ML\configs.json', 'r') as jsonFile:
         data = json.load(jsonFile)
         configs.update(data.items())
+        print(configs)
     return configs
 
 
