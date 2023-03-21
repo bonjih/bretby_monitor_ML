@@ -22,7 +22,7 @@ def format_data(i, cam_name, res, tup_1, tup_2, percent, trail_history):
         bret_coords_all.append(trail_history[i][0][0])
         bret_coords_all.append(cam_name)
 
-        # add time of entry to detect if coords are changing rapidly
+        # add time of entry to detect if co-ords are changing rapidly
         bret_coords_all.append(time.time())
 
         t0 = bret_coords_all[2]
