@@ -11,7 +11,7 @@ def format_df():
     if len(bret_data) != 0:
         data_all = [bret_data[i:i + 6] for i in range(0, len(bret_data), 6)]
         df = pd.DataFrame(data_all)
-        df.rename(columns={2: 'CameraName', 1: 'x', 0: 'y', 3: 't0', 4: 't1', 5: 'Percentage'}, inplace=True)
+        df.rename(columns={2: 'CameraName', 1: 'x', 0: 'y', 3: 't0', 4: 't1', 5: 'PercentageTroughFull'}, inplace=True)
         return df
     else:
         pass

@@ -7,8 +7,6 @@ __maintainer__ = ""
 __status__ = "Dev"
 
 import time
-
-import numpy as np
 import pandas as pd
 import cv2 as cv
 
@@ -17,10 +15,13 @@ import global_conf_variables
 
 values = global_conf_variables.get_values()
 
-db_user = values[4]
-db_pw = values[5]
-db_server = values[6]
-db_table = values[7]
+pct_of_debris = float(values[4])
+db_user = values[5]
+db_pw = values[6]
+db_host = values[7]
+db_table = values[8]
+db_driver = values[9]
+db_server = values[10]
 
 x_more = -0.39
 y_more = -0.1
@@ -33,7 +34,7 @@ def check_if_df_empty(df):
 def db_manager_controller(data, dbfields):
     result = check_if_df_empty(data)
     if not result:
-        sql = db_manager.SQL(values[4], values[5], values[6], values[7], values[8], values[9])
+        sql = db_manager.SQL(db_user, db_pw, db_host, db_table, db_driver, db_server)
         sql.insert(data, dbfields)
     else:
         pass
@@ -130,7 +131,6 @@ def save_image(came_name, image):
 # to calculate height of Bretby in the trough
 # assumption, as Bretby height increases, there is coal underneath
 def bret_loc_data(df, cam_name, img):
-
     try:
         # calc 0.39/0.1% of x/y
         # df = get_time_diff(df_time)
@@ -144,20 +144,26 @@ def bret_loc_data(df, cam_name, img):
                 df['BretbyDebLoc_y'] = df.apply(lambda row: add_y(float(row['y'])), axis=1)
                 df['result_x'] = df.apply(lambda row: greater_x(float(row['x']), float(row['BretbyDebLoc_x'])), axis=1)
                 df['result_y'] = df.apply(lambda row: greater_y(float(row['y']), float(row['BretbyDebLoc_y'])), axis=1)
-                df['debris_result'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
+
+                # if bretby is high up the trough wall return True
+                df['bretby_result'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
+
+                # if percentage of debris in Trough is >10% return True
+                df['debris_result'] = df[['Percentage']].apply(
+                    lambda x: True if x['PercentageTroughFull'] > pct_of_debris else False, axis=1)
 
                 df = df[df['result_x'] == False]
                 df_pass = df.loc[:, df.columns.drop(['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
                 df_pass = pd.concat([df_pass])
-                print(df_pass)
+
                 result = df_pass['debris_result'].eq(False).all()
-                save_image(cam_name, img)
+                # save_image(cam_name, img)
+                print(df_pass, 'fff')
                 if not result:
                     df_pass_true = df_pass[df_pass['debris_result'] == True]
                     save_image(cam_name, img)  # TODO a bug here
-
+                    print(df_pass_true)
                     db_fields = config_parser.db_parser()
                     db_manager_controller(df_pass_true, db_fields)
     except Exception as e:
         print(e)
-

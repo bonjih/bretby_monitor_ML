@@ -13,9 +13,10 @@ from inference_video import inf_run
 
 def probe_stream(video_path, cam_name):
     # client 10.61.172.166 (and or 10.61.41.4) can set RST in the TCP header if server 10.61.41.4 does not send
-    # payload after 10.61.172.166 ACK. Means the streaming server has an issue
+    # payload after 10.61.172.166 ACK. Means the streaming server has an issue.
+    # when the stream starts again, opencv does not appear to detect it, so restarting the application after 61 secs
 
-    cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
+    cap = cv2.VideoCapture(video_path, cv2.CAP_DSHOW)
     result = cap.isOpened()
 
     if result:
