@@ -18,6 +18,7 @@ def format_df():
 
 
 def format_data(i, cam_name, res, tup_1, tup_2, percent, trail_history):
+
     if not res:
         bret_coords_all.append(trail_history[i][0][0])
         bret_coords_all.append(cam_name)
@@ -45,4 +46,4 @@ def format_data(i, cam_name, res, tup_1, tup_2, percent, trail_history):
         bret_data.append(camera)
         bret_data.append(time_0)
         bret_data.append(time_1)
-        bret_data.append(round(percent, 3))
+        bret_data.append(percent)
