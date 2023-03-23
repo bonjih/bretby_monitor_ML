@@ -14,7 +14,7 @@ from imutils import contours, perspective
 
 def get_hsv_flow():
     track1hsv = (np.array([121, 0, 16]), np.array([137, 255, 180]))
-    track2hsv = (np.array([0, 0, 94]), np.array([179, 26, 189]))
+    track2hsv = (np.array([0, 0, 0]), np.array([120, 255, 255]))
     bretbyhsv = (np.array([20, 100, 100]), np.array([30, 255, 255]))
     return track1hsv, track2hsv, bretbyhsv
 
@@ -49,7 +49,7 @@ def calcAreaPercent(tl, tr, bl, arr):
 
 def get_box_coords_debris(cnts, new_frame, arr):
     for C in cnts:
-        if cv.contourArea(C) < 500:
+        if cv.contourArea(C) < 250:
             continue
 
         rect = cv.minAreaRect(C)
@@ -87,7 +87,7 @@ def make_mask(new_frame, np_array):
     hsv = cv.cvtColor(new_frame, cv.COLOR_BGR2HSV)
 
     # process trough HSV
-    track_hsv_img = cv.inRange(hsv, track1hsv[0], track1hsv[1])
+    track_hsv_img = cv.inRange(hsv, track2hsv[0], track2hsv[1])
     track_hsv_img = cv.erode(track_hsv_img, np.ones((3, 3), np.uint8), cv.BORDER_REFLECT)
     track_hsv_img = cv.dilate(track_hsv_img, np.ones((3, 3), np.uint8), cv.BORDER_REFLECT)
 
