@@ -16,7 +16,7 @@ def probe_stream(video_path, cam_name):
     # payload after 10.61.172.166 ACK. Means the streaming server has an issue.
     # when the stream starts again, opencv does not appear to detect it, so restarting the application after 61 secs
 
-    cap = cv2.VideoCapture(video_path, cv2.CAP_DSHOW)
+    cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
     result = cap.isOpened()
 
     if result:
