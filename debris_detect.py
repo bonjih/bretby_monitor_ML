@@ -1,7 +1,34 @@
+__author__ = ""
+__email__ = ""
+__phone__ = ""
+__license__ = "xxx"
+__version__ = "1.0.0"
+__maintainer__ = ""
+__status__ = "Dev"
+
 import cv2
 import numpy as np
 import imutils
 from imutils import perspective
+
+lst = []
+
+
+# gets previous and next contour len
+# if the same len, keep, if not reject.
+# reject means contours are different and box is moving
+def make_pairwise(item):
+    l = len(item)
+
+    tups = list(zip([l], [l][:1] + [l][1:]))
+    lst.append(tups)
+    a = lst[0][0][1]
+    b = lst[-1][0][0]
+
+    if a == b:
+        return True
+    else:
+        return False
 
 
 def draw_color_contours(frame, cnts):
@@ -15,18 +42,25 @@ def draw_color_contours(frame, cnts):
         rect = cv2.minAreaRect(c)
         box_area = rect[1][0] * rect[1][1]
 
-        if rect[1][0] > 20.0:
+        M = cv2.moments(c)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+
+        if rect[1][0] > 20.0 and rect[1][1] < 100:
             box = cv2.boxPoints(rect)
             box = perspective.order_points(box)
             (tl, tr, br, bl) = box
+            result = make_pairwise(c)
 
-            percent = round((area_cont / box_area) * 100, 2)
-            cv2.drawContours(frame, [box.astype("int")], -1, (255, 255, 0), 2)
+            if result:
+                percent = round((area_cont / box_area) * 100, 2)
+                cv2.drawContours(frame, [box.astype("int")], -1, (255, 255, 0), 2)
+                cv2.circle(frame, (cX, cY), 7, (255, 255, 255), -1)
 
-            cv2.putText(frame, "%" + "{}".format(percent), (int(tr[0]), int(tr[1]) + 40), cv2.FONT_HERSHEY_SIMPLEX,
-                        1, (255, 0, 0), 2, cv2.LINE_AA)
+                cv2.putText(frame, "%" + "{}".format(percent), (int(tr[0]), int(tr[1]) + 40), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (255, 0, 0), 2, cv2.LINE_AA)
+                return percent
 
-            return percent
         else:
             pass
 
@@ -107,7 +141,7 @@ def make_mask(frame, np_array):
     return cnts_trough, cnts_bretby
 
 
-def find_contours(frame, np_array):
+def find_contours(frame, np_array, name, cap):
     no_blur = frame
 
     cnts_trough, bretby_hsv = make_mask(frame, np_array)
