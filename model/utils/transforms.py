@@ -52,3 +52,8 @@ def infer_transforms(image):
         transforms.ToTensor(),
     ])
     return transform(image)
+
+
+# a check to see if to images are the same before saving to file/db
+def is_similar(image1, image2):
+    return image1.shape == image2.shape and not (np.bitwise_xor(image1, image2).any())
