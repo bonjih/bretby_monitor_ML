@@ -6,12 +6,15 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import time
-import pandas as pd
-import cv2 as cv
+import glob
+import os
 
-import db_manager, config_parser
+import pandas as pd
+
+import config_parser
+import db_manager
 import global_conf_variables
+from model.utils.transforms import save_image, is_similar, convert_img_for_db
 
 values = global_conf_variables.get_values()
 
@@ -33,6 +36,7 @@ def check_if_df_empty(df):
 
 def db_manager_controller(data, dbfields):
     result = check_if_df_empty(data)
+
     if not result:
         sql = db_manager.SQL(db_user, db_pw, db_host, db_table, db_driver, db_server)
         sql.insert(data, dbfields)
@@ -102,8 +106,9 @@ def get_time_diff(df):
 
     df['TimeStamp'] = (df['t0'].astype(float) - df['t1'].astype(float)) / 100000000
     df.TimeStamp = pd.to_datetime(df.TimeStamp, unit='ps')
-    # df['diff'] = (df['TimeStamp'] - df['TimeStamp'].shift(1))
+    df['diff'] = (df['TimeStamp'] - df['TimeStamp'].shift(1))
     # df.drop('TimeStamp', axis=1, inplace=True)
+    # print(df['diff'])
 
     return df
 
@@ -112,57 +117,77 @@ def get_change_in_xy(df):
     df = df.copy()
     df['diff_x'] = abs((df['x'].astype(int) - df['x'].astype(int).shift(1)))
     df['diff_y'] = abs((df['y'].astype(int) - df['y'].astype(int).shift(1)))
-    df = df.loc[df['diff_y'] != 0.0].copy()
+
+    # df = df.loc[df['diff_y'] != 0.0].copy()
     df.reset_index(drop=True, inplace=True)
     df.dropna(inplace=True)
 
     return df
 
 
-def save_image(came_name, image):
-    """
-    saves an image if condition (result) is True
-    :return:
-    """
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    cv.imwrite(f'saved_images/{came_name}-{timestr}.jpg', image)
+# first saves an image with debris (initialise), then check latest image to compare
+# if image has already been read
+def check_saved_image(cam_name, img):
+    res = os.listdir('./saved_images')
+
+    # save an initial image to compare if dir is empty
+    if len(res) == 0:
+        save_image(cam_name, img)
+        bts_img = convert_img_for_db(img)
+        df_bts_img = pd.DataFrame([cam_name, bts_img])
+        df_bts_img.rename(columns={0: 'Image'}, inplace=True)
+        return df_bts_img
+
+    else:
+        list_of_files = glob.glob('saved_images/*.jpg')
+        prev_img = max(list_of_files, key=os.path.getctime)
+        result = is_similar(img, prev_img)
+
+        if result:
+            save_image(cam_name, img)
+            bts_img = convert_img_for_db(img)
+            df_bts_img = pd.DataFrame([cam_name, bts_img])
+            df_bts_img.rename(columns={0: 'Image'}, inplace=True)
+            return df_bts_img
 
 
 # to calculate height of Bretby in the trough
 # assumption, as Bretby height increases, there is coal underneath
-def bret_loc_data(df, cam_name, img):
+def bret_loc_data(df_infer, cam_name, img, bb_results):
     try:
         # calc 0.39/0.1% of x/y
         # df = get_time_diff(df_time)
+        if not df_infer.empty or not None:
 
-        if not df.empty or not None:
+            if bb_results:
+                df = get_change_in_xy(df_infer)
 
-            df = get_change_in_xy(df)
+                if not df.empty:
+                    df['BretbyDebLoc_x'] = df.apply(lambda row: add_x(float(row['x'])), axis=1)
+                    df['BretbyDebLoc_y'] = df.apply(lambda row: add_y(float(row['y'])), axis=1)
+                    df['result_x'] = df.apply(lambda row: greater_x(float(row['x']), float(row['BretbyDebLoc_x'])),
+                                              axis=1)
+                    df['result_y'] = df.apply(lambda row: greater_y(float(row['y']), float(row['BretbyDebLoc_y'])),
+                                              axis=1)
 
-            if not df.empty:
-                df['BretbyDebLoc_x'] = df.apply(lambda row: add_x(float(row['x'])), axis=1)
-                df['BretbyDebLoc_y'] = df.apply(lambda row: add_y(float(row['y'])), axis=1)
-                df['result_x'] = df.apply(lambda row: greater_x(float(row['x']), float(row['BretbyDebLoc_x'])), axis=1)
-                df['result_y'] = df.apply(lambda row: greater_y(float(row['y']), float(row['BretbyDebLoc_y'])), axis=1)
+                    # if percentage of debris in Trough is >10% return True
+                    df['DebrisResult'] = df[['PercentageTroughFull']].apply(
+                        lambda x: True if x['PercentageTroughFull'] > pct_of_debris else False, axis=1)
 
-                # if bretby is high up the trough wall return True
-                df['bretby_result'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
+                    # if bretby is high up the trough wall return True
+                    df['BretbyResult'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
 
-                # if percentage of debris in Trough is >10% return True
-                df['debris_result'] = df[['Percentage']].apply(
-                    lambda x: True if x['PercentageTroughFull'] > pct_of_debris else False, axis=1)
+                    df = df[df['result_x'] == False]
+                    df_pass = df.loc[:,
+                              df.columns.drop(['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
 
-                df = df[df['result_x'] == False]
-                df_pass = df.loc[:, df.columns.drop(['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
-                df_pass = pd.concat([df_pass])
+                    df_bts_img = check_saved_image(cam_name, img)
+                    df_pass = pd.concat([df_pass, df_bts_img], axis=1)
 
-                result = df_pass['debris_result'].eq(False).all()
-                # save_image(cam_name, img)
-                print(df_pass, 'fff')
-                if not result:
-                    df_pass_true = df_pass[df_pass['debris_result'] == True]
-                    save_image(cam_name, img)  # TODO a bug here
-                    print(df_pass_true)
+                    # result = df_pass['debris_result'].eq(False).all()
+
+                    df_pass_true = df_pass[df_pass['DebrisResult'] == True]
+
                     db_fields = config_parser.db_parser()
                     db_manager_controller(df_pass_true, db_fields)
     except Exception as e:
