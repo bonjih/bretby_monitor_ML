@@ -6,8 +6,6 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import os
-
 import imutils
 import numpy as np
 import cv2
@@ -19,7 +17,7 @@ import global_conf_variables
 from model.models.create_fasterrcnn_model import create_model
 from model.utils.annotations import inference_annotations, annotate_fps
 from model.utils.transforms import infer_transforms
-from bretby_flow import bret_flow_run3
+from bretby_flow import bret_flow_run
 from utils.save_vid import vid_save
 
 values = global_conf_variables.get_values()
@@ -35,13 +33,11 @@ weights = 'model/last_model_state_15032023.pth'
 threshold = 0.90  # detection threshold - any detection having score below this will be discarded.
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 models = 'fasterrcnn_resnet50_fpn_v2'
-OUT_DIR = r'C:\bretby_monitor\saved_videos'
 
 
 def read_return_video(video_path, cam_name):
     try:
-        os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
-        cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
+        cap = cv2.VideoCapture(video_path, cv2.CAP_FFMPEG)
 
         result = cap.isOpened()
         if result:
@@ -55,8 +51,8 @@ def read_return_video(video_path, cam_name):
 
             old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
-            frame_width = int(cap.get(3))
-            frame_height = int(cap.get(4))
+            frame_width = old_frame.shape[1]
+            frame_height = old_frame.shape[0]
             assert (frame_width != 0 and frame_height != 0), 'Please check video path...'
             return cap, frame_width, frame_height, old_frame, old_gray
 
@@ -125,7 +121,6 @@ def main(cam_name, source):
 
         # capture each frame of the video
         ret, frame = cap.read()
-        frame = imutils.resize(frame, width=RESIZE_TO)
 
         t1 = time.time()
         time_out = t1 - t0
@@ -134,6 +129,7 @@ def main(cam_name, source):
             break
 
         if ret:
+            frame = imutils.resize(frame, width=RESIZE_TO)
             orig_frame = frame.copy()
             image = frame.copy()
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -166,7 +162,7 @@ def main(cam_name, source):
                 frame, x, y = inference_annotations(outputs, detection_threshold, CLASSES, COLORS, orig_frame, frame)
 
                 if len(x) != 0 and len(x) != 0:
-                    bret_flow_run3(orig_frame, old_gray, old_frame, cam_name, x, y)
+                    bret_flow_run(orig_frame, old_gray, old_frame, cam_name, x, y)
                     pass
             else:
 
