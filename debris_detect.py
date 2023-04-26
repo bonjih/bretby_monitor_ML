@@ -50,6 +50,7 @@ def draw_color_contours(frame, cnts):
             box = cv2.boxPoints(rect)
             box = perspective.order_points(box)
             (tl, tr, br, bl) = box
+
             result = make_pairwise(c)
 
             if result:
@@ -59,7 +60,7 @@ def draw_color_contours(frame, cnts):
 
                 cv2.putText(frame, "%" + "{}".format(percent), (int(tr[0]), int(tr[1]) + 40), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (255, 0, 0), 2, cv2.LINE_AA)
-                return percent
+                return percent, result
 
         else:
             pass
@@ -141,10 +142,10 @@ def make_mask(frame, np_array):
     return cnts_trough, cnts_bretby
 
 
-def find_contours(frame, np_array, name, cap):
+def find_contours(frame, np_array):
     no_blur = frame
 
     cnts_trough, bretby_hsv = make_mask(frame, np_array)
 
-    percent = draw_color_contours(no_blur, cnts_trough)
-    return cnts_trough, bretby_hsv, percent
+    percent, result = draw_color_contours(no_blur, cnts_trough)
+    return cnts_trough, bretby_hsv, percent, result
