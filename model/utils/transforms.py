@@ -9,6 +9,7 @@ __status__ = "Dev"
 import time
 import cv2 as cv
 import numpy as np
+import hashlib
 
 from torchvision import transforms as transforms
 
@@ -77,4 +78,8 @@ def convert_img_for_db(image):
     img_encode = cv.imencode('.jpg', image)[1]
     data_encode = np.array(img_encode)
     bts = data_encode.tobytes()
-    return bts
+
+    # make a hash of the byte array
+    # used as a check for duplicate entries in table
+    m = hashlib.sha1(bts).hexdigest()
+    return bts, m
