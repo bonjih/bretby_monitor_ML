@@ -11,37 +11,21 @@ import os
 
 import pandas as pd
 
-import config_parser
-import db_manager
 import global_conf_variables
+from db_manager import db_manager_controller
 from model.utils.transforms import save_image, is_similar, convert_img_for_db
 
 values = global_conf_variables.get_values()
 
 pct_of_debris = float(values[4])
-db_user = values[5]
-db_pw = values[6]
-db_host = values[7]
-db_table = values[8]
-db_driver = values[9]
-db_server = values[10]
 
+# an arbitrary buffer to x/y of bretby to cater for exceptions
 x_more = -0.39
 y_more = -0.1
 
 
 def check_if_df_empty(df):
     return len(df.index) == 0
-
-
-def db_manager_controller(data, dbfields):
-    result = check_if_df_empty(data)
-
-    if not result:
-        sql = db_manager.SQL(db_user, db_pw, db_host, db_table, db_driver, db_server)
-        sql.insert(data, dbfields)
-    else:
-        pass
 
 
 def add_x(sum_x):
@@ -109,7 +93,6 @@ def get_time_diff(df):
     df['diff'] = (df['TimeStamp'] - df['TimeStamp'].shift(1))
     # df.drop('TimeStamp', axis=1, inplace=True)
     # print(df['diff'])
-
     return df
 
 
@@ -121,7 +104,6 @@ def get_change_in_xy(df):
     # df = df.loc[df['diff_y'] != 0.0].copy()
     df.reset_index(drop=True, inplace=True)
     df.dropna(inplace=True)
-
     return df
 
 
@@ -163,6 +145,7 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
                 df = get_change_in_xy(df_infer)
 
                 if not df.empty:
+
                     df['BretbyDebLoc_x'] = df.apply(lambda row: add_x(float(row['x'])), axis=1)
                     df['BretbyDebLoc_y'] = df.apply(lambda row: add_y(float(row['y'])), axis=1)
                     df['result_x'] = df.apply(lambda row: greater_x(float(row['x']), float(row['BretbyDebLoc_x'])),
@@ -178,17 +161,18 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
                     df['BretbyResult'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
 
                     df = df[df['result_x'] == False]
-                    df_pass = df.loc[:,
-                              df.columns.drop(['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
+                    df_pass = df.loc[:, df.columns.drop(
+                        ['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
 
                     df_bts_img = check_saved_image(cam_name, img)
-                    df_pass = pd.concat([df_pass, df_bts_img], axis=1)
+                    df_pass['Image'] = df_bts_img
+                    df_pass = pd.concat([df_pass])
 
                     # result = df_pass['debris_result'].eq(False).all()
-
                     df_pass_true = df_pass[df_pass['DebrisResult'] == True]
 
-                    db_fields = config_parser.db_parser()
-                    db_manager_controller(df_pass_true, db_fields)
+                    # db manager gets results from csv file for db insert
+                    df_pass_true.to_csv('temp_out.csv', index=False)
+                    db_manager_controller()
     except Exception as e:
         print(e)
