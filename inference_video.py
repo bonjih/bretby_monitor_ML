@@ -28,8 +28,8 @@ save_vid = values[2]
 preview_window = values[3]
 
 img_size = 960
-configs = 'model/data_configs/custom_data.yaml'
-weights = 'model/last_model_state_15032023.pth'
+configs = 'C:\\bretby_monitor_ML\\model\\data_configs\\custom_data.yaml'
+weights = 'C:\\bretby_monitor_ML\\model\\last_model_state_15032023.pth'
 threshold = 0.90  # detection threshold - any detection having score below this will be discarded.
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 models = 'fasterrcnn_resnet50_fpn_v2'

@@ -70,7 +70,7 @@ def save_image(cam_name, image):
     :return:
     """
     timestr = time.strftime("%Y%m%d-%H%M%S")
-    cv.imwrite(f'saved_images/{cam_name}-{timestr}.jpg', image)
+    cv.imwrite(f'C:\\bretby_monitor_ML\\saved_images\\{cam_name}-{timestr}.jpg', image)
 
 
 # convert image data to binary format for db insert
