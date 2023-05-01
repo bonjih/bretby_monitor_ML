@@ -16,16 +16,6 @@ class ConfigDict(dict):
     creates a dictionary from jconfig.json
     """
 
-    # GELPhotos = config['image_path']  # image from GelPhotos folder
-    # file_type = config['file_type']
-    # filtered = config['filtered']  # where scripts puts new images to process cv
-    # user = config['user']
-    # passwd = config['passwd']
-    # host = config['host']
-    # database = config['database']
-    # known_distance = config['known_distance']
-    # known_width = config['known_width']
-
     def __init__(self):
         super().__init__()
         self.config = dict()
