@@ -110,7 +110,7 @@ def get_change_in_xy(df):
 # first saves an image with debris (initialise), then check latest image to compare
 # if image has already been read
 def check_saved_image(cam_name, img):
-    res = os.listdir('./saved_images')
+    res = os.listdir('C:\\bretby_monitor_ML\\saved_images')
 
     # save an initial image to compare if dir is empty
     if len(res) == 0:
@@ -121,7 +121,7 @@ def check_saved_image(cam_name, img):
         return df_bts_img
 
     else:
-        list_of_files = glob.glob('saved_images/*.jpg')
+        list_of_files = glob.glob('C:\\bretby_monitor_ML\\saved_images\\*.jpg')
         prev_img = max(list_of_files, key=os.path.getctime)
         result = is_similar(img, prev_img)
 
