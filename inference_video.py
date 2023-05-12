@@ -12,6 +12,7 @@ import cv2
 import torch
 import time
 import yaml
+from datetime import datetime
 
 import global_conf_variables
 from model.models.create_fasterrcnn_model import create_model
@@ -61,7 +62,7 @@ def read_return_video(video_path, cam_name):
             probe_stream(video_path, cam_name)
 
     except Exception as e:
-        print(e)
+        print(e, 'Infer_read_vid', datetime.now())
 
 
 def main(cam_name, source):
@@ -177,7 +178,8 @@ def main(cam_name, source):
                 video_out.write(frame)
 
             if preview_window:
-                cv2.imshow(cam_name, frame)
+                # cv2.imshow(cam_name, frame)
+                pass
                 # Press `q` to exit
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
