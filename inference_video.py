@@ -179,7 +179,7 @@ def main(cam_name, source):
 
             if preview_window:
                 # cv2.imshow(cam_name, frame)
-                pass
+
                 # Press `q` to exit
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
