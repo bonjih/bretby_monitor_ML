@@ -6,7 +6,10 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
+import sys
+
 import pandas as pd
+from datetime import datetime
 
 import global_conf_variables
 from stream_manager import probe_stream
@@ -30,7 +33,9 @@ def main():
                 probe_stream(row['address'], row['cam_name'])
 
         except Exception as e:
-            print(e)
+            if e == 'maximum recursion depth exceeded while calling a Python object':
+                print(e, 'Main - ', datetime.now())
+                sys.exit()
 
 
 if __name__ == "__main__":

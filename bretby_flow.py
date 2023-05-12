@@ -8,6 +8,7 @@ __status__ = "Dev"
 
 import cv2 as cv
 import numpy as np
+from datetime import datetime
 
 import data_processing
 from data_format import format_df, format_data
@@ -69,7 +70,7 @@ trail_history = [[[(0, 0), (0, 0)] for _ in range(trailLength)] for _ in range(n
 
 
 # PROCESS VIDEO ---------------------------------------------------------------
-def bret_flow3(new_frame, old_gray, old_frame, cam_name, x, y):
+def bret_flow(new_frame, old_gray, old_frame, cam_name, x, y):
     global crosshair_mask
     np_array = get_bb_coords(x, y)
 
@@ -104,6 +105,7 @@ def bret_flow3(new_frame, old_gray, old_frame, cam_name, x, y):
                                                       **LK_params)
     except Exception as e:
         pass  # TODO make if statements when no bretby to track
+        print(e, 'bretflow_newPoints -', datetime.now())
 
     # select good points
     if old_points is not None and new_points is not None:
@@ -168,8 +170,9 @@ def bret_flow3(new_frame, old_gray, old_frame, cam_name, x, y):
 
 
 def bret_flow_run(orig_frame, old_gray, old_frame, cam_name, x, y):
+
     try:
-        images, results = bret_flow3(orig_frame, old_gray, old_frame, cam_name, x, y)
+        images, results = bret_flow(orig_frame, old_gray, old_frame, cam_name, x, y)
 
         df = format_df()
 
@@ -178,4 +181,4 @@ def bret_flow_run(orig_frame, old_gray, old_frame, cam_name, x, y):
         else:
             pass
     except Exception as e:
-        pass
+        print(e, 'bretflow_run', datetime.now())

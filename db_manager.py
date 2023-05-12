@@ -6,7 +6,6 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import time
 
 import pandas as pd
 import pyodbc

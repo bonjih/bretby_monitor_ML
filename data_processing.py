@@ -8,7 +8,7 @@ __status__ = "Dev"
 
 import glob
 import os
-
+from datetime import datetime
 import pandas as pd
 
 import global_conf_variables
@@ -17,6 +17,7 @@ from model.utils.transforms import save_image, is_similar, convert_img_for_db
 
 values = global_conf_variables.get_values()
 
+# % value of debris in the trough, used as a flag to save image
 pct_of_debris = float(values[4])
 
 # an arbitrary buffer to x/y of bretby to cater for exceptions
@@ -96,15 +97,16 @@ def get_time_diff(df):
     return df
 
 
-def get_change_in_xy(df):
-    df = df.copy()
-    df['diff_x'] = abs((df['x'].astype(int) - df['x'].astype(int).shift(1)))
-    df['diff_y'] = abs((df['y'].astype(int) - df['y'].astype(int).shift(1)))
-
-    # df = df.loc[df['diff_y'] != 0.0].copy()
-    df.reset_index(drop=True, inplace=True)
-    df.dropna(inplace=True)
-    return df
+# def get_change_in_xy(df):
+#
+#     df = df.copy()
+#     df['diff_x'] = abs((df['x'].astype(int) - df['x'].astype(int).shift(1)))
+#     df['diff_y'] = abs((df['y'].astype(int) - df['y'].astype(int).shift(1)))
+#     print(df['diff_x'], df['diff_y'])
+#     # df = df.loc[df['diff_y'] != 0.0].copy()
+#     df.reset_index(drop=True, inplace=True)
+#     df.dropna(inplace=True)
+#     return df
 
 
 # first saves an image with debris (initialise), then check latest image to compare
@@ -116,8 +118,9 @@ def check_saved_image(cam_name, img):
     if len(res) == 0:
         save_image(cam_name, img)
         bts_img = convert_img_for_db(img)
-        df_bts_img = pd.DataFrame([cam_name, bts_img])
+        df_bts_img = pd.DataFrame([bts_img])
         df_bts_img.rename(columns={0: 'Image'}, inplace=True)
+
         return df_bts_img
 
     else:
@@ -128,7 +131,7 @@ def check_saved_image(cam_name, img):
         if result:
             save_image(cam_name, img)
             bts_img = convert_img_for_db(img)
-            df_bts_img = pd.DataFrame([cam_name, bts_img])
+            df_bts_img = pd.DataFrame([bts_img])
             df_bts_img.rename(columns={0: 'Image'}, inplace=True)
             return df_bts_img
 
@@ -142,10 +145,9 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
         if not df_infer.empty or not None:
 
             if bb_results:
-                df = get_change_in_xy(df_infer)
-
+                # df = get_change_in_xy(df_infer)  # TODO, check the way bretby is track up the face of trough
+                df = df_infer
                 if not df.empty:
-
                     df['BretbyDebLoc_x'] = df.apply(lambda row: add_x(float(row['x'])), axis=1)
                     df['BretbyDebLoc_y'] = df.apply(lambda row: add_y(float(row['y'])), axis=1)
                     df['result_x'] = df.apply(lambda row: greater_x(float(row['x']), float(row['BretbyDebLoc_x'])),
@@ -153,7 +155,7 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
                     df['result_y'] = df.apply(lambda row: greater_y(float(row['y']), float(row['BretbyDebLoc_y'])),
                                               axis=1)
 
-                    # if percentage of debris in Trough is >10% return True
+                    # if percentage of debris in Trough is >20% return True
                     df['DebrisResult'] = df[['PercentageTroughFull']].apply(
                         lambda x: True if x['PercentageTroughFull'] > pct_of_debris else False, axis=1)
 
@@ -161,12 +163,12 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
                     df['BretbyResult'] = df.apply(lambda row: check_eqal((row['result_x']), (row['result_y'])), axis=1)
 
                     df = df[df['result_x'] == False]
-                    df_pass = df.loc[:, df.columns.drop(
-                        ['t0', 't1', 'x', 'y', 'diff_x', 'diff_y', 'result_x', 'result_y'])]
 
                     df_bts_img = check_saved_image(cam_name, img)
-                    df_pass['Image'] = df_bts_img
-                    df_pass = pd.concat([df_pass])
+
+                    df = df.join(df_bts_img)
+                    df_pass = df[['CameraName', 'PercentageTroughFull', 'BretbyDebLoc_x', 'BretbyDebLoc_y',
+                                  'DebrisResult', 'BretbyResult', 'Image']]
 
                     # result = df_pass['debris_result'].eq(False).all()
                     df_pass_true = df_pass[df_pass['DebrisResult'] == True]
@@ -174,5 +176,6 @@ def bret_loc_data(df_infer, cam_name, img, bb_results):
                     # db manager gets results from csv file for db insert
                     df_pass_true.to_csv('temp_out.csv', index=False)
                     db_manager_controller()
+                    df_pass_true.loc[:] = None
     except Exception as e:
-        print(e)
+        print(e, 'data-pro - ', datetime.now())
