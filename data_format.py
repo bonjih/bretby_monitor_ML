@@ -1,3 +1,11 @@
+__author__ = ""
+__email__ = ""
+__phone__ = ""
+__license__ = "xxx"
+__version__ = "1.0.0"
+__maintainer__ = ""
+__status__ = "Dev"
+
 import re
 import time
 import pandas as pd
@@ -9,7 +17,7 @@ bret_data = []
 def format_df():
     # for some reason could not split using [df[0].split(' ', expand=True)]
     if len(bret_data) != 0:
-        data_all = [bret_data[i:i + 6] for i in range(0, len(bret_data), 6)]
+        data_all = [bret_data[i:i + len(bret_data)] for i in range(0, len(bret_data), len(bret_data))]
         df = pd.DataFrame(data_all)
         df.rename(columns={2: 'CameraName', 1: 'x', 0: 'y', 3: 't0', 4: 't1', 5: 'PercentageTroughFull'}, inplace=True)
         return df
