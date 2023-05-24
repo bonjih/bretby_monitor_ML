@@ -19,7 +19,7 @@ from model.models.create_fasterrcnn_model import create_model
 from model.utils.annotations import inference_annotations, annotate_fps
 from model.utils.transforms import infer_transforms
 from bretby_flow import bret_flow_run
-from utils.save_vid import vid_save
+from utils.save_file_methods import vid_save
 
 values = global_conf_variables.get_values()
 
