@@ -13,7 +13,7 @@ from datetime import datetime
 import data_processing
 from data_format import format_df, format_data
 from debris_detect import find_contours
-from old_code.image_mask import get_box_coords
+from debris_detect import get_box_coords
 from model.utils.transforms import get_bb_coords
 
 # PARAMETERS------------------------------------------------------------------
@@ -105,7 +105,7 @@ def bret_flow(new_frame, old_gray, old_frame, cam_name, x, y):
                                                       **LK_params)
     except Exception as e:
         pass  # TODO make if statements when no bretby to track
-        print(e, 'bretflow_newPoints -', datetime.now())
+        # print(e, 'bretflow_newPoints -', datetime.now())
 
     # select good points
     if old_points is not None and new_points is not None:
@@ -181,4 +181,5 @@ def bret_flow_run(orig_frame, old_gray, old_frame, cam_name, x, y):
         else:
             pass
     except Exception as e:
-        print(e, 'bretflow_run', datetime.now())
+        pass
+        #print(e, 'bretflow_run', datetime.now())
