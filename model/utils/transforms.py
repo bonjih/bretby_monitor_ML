@@ -63,15 +63,6 @@ def is_similar(current, prev):
     return a.shape == b.shape and not (np.bitwise_xor(a, b).any())
 
 
-def save_image(cam_name, image):
-    """
-    saves an image if condition (result) is True
-    :return:
-    """
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    cv.imwrite(f'C:\\bretby_monitor_ML\\saved_images\\{cam_name}-{timestr}.jpg', image)
-
-
 # convert image data to binary format for db insert
 def convert_img_for_db(image):
     img_encode = cv.imencode('.jpg', image)[1]
