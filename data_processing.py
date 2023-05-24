@@ -13,7 +13,8 @@ import pandas as pd
 
 import global_conf_variables
 from db_manager import db_manager_controller
-from model.utils.transforms import save_image, is_similar, convert_img_for_db
+from model.utils.transforms import is_similar, convert_img_for_db
+from utils.save_file_methods import save_image
 
 values = global_conf_variables.get_values()
 
