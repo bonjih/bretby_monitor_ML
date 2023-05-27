@@ -6,49 +6,50 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import time
 import cv2 as cv
 import numpy as np
-
 from torchvision import transforms as transforms
 
 
-# makes the new bb coords for annotation:
-def get_bb_coords_new_bb(tl0, br0):
+def get_bb_coords_new_bb(tl, br):
     """
-    :param tl0: box x
-    :param br0: box y
-    :return: np array of bounding box
+    Calculates the new bounding box coordinates for annotation.
+    :param tl: Top-left corner of the box (x, y)
+    :param br: Bottom-right corner of the box (x, y)
+    :return: Numpy array of new bounding box coordinates
     """
-    bl = (tl0[0], br0[1])
-    br = br0
-    tr = (br0[0], tl0[1])
-    new_tl = tl0[0] + 50
-    tl = (new_tl, tl0[1])
-    arr = np.array([bl, br, tr, tl])
+    bl = (tl[0], br[1])
+    br = br
+    tr = (br[0], tl[1])
+    new_tl = tl[0] + 50
+    new_tl_coord = (new_tl, tl[1])
+    arr = np.array([bl, br, tr, new_tl_coord])
     return arr
 
 
-# makes the bb coords for array input to find_mask as:
-# bl, br, tl, tr
-def get_bb_coords(tl0, br0):
+def get_bb_coords(tl, br):
     """
-    :param tl0: box x
-    :param br0: box y
-    :return: np array of bounding box
+    Calculates the bounding box coordinates as (bl, br, tl, tr) for array input.
+    :param tl: Top-left corner of the box (x, y)
+    :param br: Bottom-right corner of the box (x, y)
+    :return: Numpy array of bounding box coordinates
     """
     try:
-        if len(tl0) and len(br0) != 0:
-            bl = (tl0[0][0], br0[0][1])
-            tr = (br0[0][0], tl0[0][1])
-            arr = np.array([bl, br0[0], tr, tl0[0]])
+        if len(tl) and len(br) != 0:
+            bl = (tl[0][0], br[0][1])
+            tr = (br[0][0], tl[0][1])
+            arr = np.array([bl, br[0], tr, tl[0]])
             return arr
     except:
         pass
 
 
 def infer_transforms(image):
-    # Define the torchvision image transforms.
+    """
+    Applies torchvision image transforms to the image.
+    :param image: Input image
+    :return: Transformed image
+    """
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),
@@ -56,15 +57,23 @@ def infer_transforms(image):
     return transform(image)
 
 
-# a check to see if to images are the same before saving to file/db
-def is_similar(current, prev):
-    a = current
-    b = cv.imread(prev)
-    return a.shape == b.shape and not (np.bitwise_xor(a, b).any())
+def is_similar(current_image, prev_image_path):
+    """
+    Checks if two images are similar by comparing their shapes and bitwise XOR.
+    :param current_image: Current image as a NumPy array
+    :param prev_image_path: Path to the previous image
+    :return: True if the images are similar, False otherwise
+    """
+    previous_image = cv.imread(prev_image_path)
+    return current_image.shape == previous_image.shape and not np.bitwise_xor(current_image, previous_image).any()
 
 
-# convert image data to binary format for db insert
 def convert_img_for_db(image):
+    """
+    Converts the image data to binary format for database insertion.
+    :param image: Image data as a NumPy array
+    :return: Image data in bytes format
+    """
     img_encode = cv.imencode('.jpg', image)[1]
     data_encode = np.array(img_encode)
     bts = data_encode.tobytes()

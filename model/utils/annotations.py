@@ -7,8 +7,6 @@ __maintainer__ = ""
 __status__ = "Dev"
 
 import numpy as np
-import torch
-from torchvision.ops import nms
 import cv2
 
 from model.utils.transforms import get_bb_coords_new_bb
@@ -16,32 +14,18 @@ from model.utils.transforms import get_bb_coords_new_bb
 no_labels = False
 
 
-def inference_annotations(
-        outputs,
-        detection_threshold,
-        classes,
-        colors,
-        orig_image,
-        image
-):
+def inference_annotations(outputs, detection_threshold, classes, colors, orig_image, image):
     height, width, _ = orig_image.shape
-    boxes = outputs[0]['boxes'].data.numpy()
-
-    scores = outputs[0]['scores'].data.numpy()
+    boxes = outputs[0]['boxes'].cpu().detach().numpy()
+    scores = outputs[0]['scores'].cpu().detach().numpy()
 
     # Filter out boxes according to 'detection_threshold'.
-    boxes = boxes[scores >= detection_threshold].astype(np.int32)
+    filtered_indices = np.where(scores >= detection_threshold)[0]
+    boxes = boxes[filtered_indices].astype(np.int32)
+    scores = scores[filtered_indices]
 
-    #
-    # boxes = torch.from_numpy(np.array(boxes))
-    #
-    # scores = torch.from_numpy(np.array(scores))
-    #
-    # nms(boxes=boxes, scores=scores, iou_threshold=0.2)
-    #
-    # boxes = boxes.numpy()
-    # scores = scores.numpy()
     draw_boxes = boxes.copy()
+
     # Get all the predicted class names.
     pred_classes = [classes[i] for i in outputs[0]['labels'].cpu().numpy()]
 
@@ -55,20 +39,16 @@ def inference_annotations(
         p1 = (int(box[0] / image.shape[1] * width), int(box[1] / image.shape[0] * height))
         p2 = (int(box[2] / image.shape[1] * width), int(box[3] / image.shape[0] * height))
 
-        # ensure len is within img bounds
+        # Ensure length is within image bounds
         off_set = 50
         new_len = int(p2[1] - off_set)
         p2 = (p2[0], new_len)
 
-        # fit bb to perspective of trough
+        # Fit bb to perspective of trough
         arr = get_bb_coords_new_bb(p1, p2)
 
         class_name = pred_classes[j]
         color = colors[classes.index(class_name)]
-
-        # draws the bounding box as contours over a square
-        # cv2.drawContours(orig_image, [arr], 0, color=color, thickness=lw,
-        #                  lineType=cv2.LINE_AA)
 
         cv2.rectangle(
             orig_image,
@@ -119,16 +99,8 @@ def inference_annotations(
     return orig_image, tl, br
 
 
-def draw_text(
-        img,
-        text,
-        font=cv2.FONT_HERSHEY_SIMPLEX,
-        pos=(0, 0),
-        font_scale=1,
-        font_thickness=1,
-        text_color=(0, 255, 0),
-        text_color_bg=(0, 0, 0),
-):
+def draw_text(img, text, font=cv2.FONT_HERSHEY_SIMPLEX, pos=(0, 0), font_scale=1, font_thickness=1,
+              text_color=(0, 255, 0), text_color_bg=(0, 0, 0)):
     offset = (5, 5)
     x, y = pos
     text_size, _ = cv2.getTextSize(text, font, font_scale, font_thickness)
