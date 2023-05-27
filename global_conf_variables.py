@@ -13,7 +13,7 @@ config = config_parser()
 
 class ConfigDict(dict):
     """
-    creates a dictionary from jconfig.json
+    creates a dictionary from config.json
     """
 
     def __init__(self):
