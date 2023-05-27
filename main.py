@@ -7,7 +7,6 @@ __maintainer__ = ""
 __status__ = "Dev"
 
 import sys
-
 import pandas as pd
 from datetime import datetime
 
