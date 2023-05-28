@@ -5,28 +5,22 @@ __version__ = "1.0.0"
 __maintainer__ = ""
 __status__ = "Dev"
 
-import time
 import cv2
-
 from inference_video import inf_run
 
 
+# client 10.61.172.166 (and or 10.61.41.4) can set RST in the TCP header if server 10.61.41.4 does not send
+# payload after 10.61.172.166 ACK. Means the streaming server has an issue or the network itself
+# when the stream starts again, opencv does not appear to detect it, so restarting the application after 61 secs
 def probe_stream(video_path, cam_name):
-    # client 10.61.172.166 (and or 10.61.41.4) can set RST in the TCP header if server 10.61.41.4 does not send
-    # payload after 10.61.172.166 ACK. Means the streaming server has an issue.
-    # when the stream starts again, opencv does not appear to detect it, so restarting the application after 61 secs
-
     cap = cv2.VideoCapture(video_path, apiPreference=cv2.CAP_FFMPEG)
     result = cap.isOpened()
+    cap.release()  # Release the capture object
 
+    # assumes if there is no stream from a single camera, all cameras do not work (appears to be the case)
+    # all streams are from the same server, means issue with the server on network itself.
     if result:
         inf_run(cam_name, video_path)
-
-    elif not result:
-        # assumes if there is no stream from a single camera, all cameras do not work, (appears to be the case)
-        # all streams are from the same server, means issue with the server.
-        from main import main
-        print(f"Camera {cam_name} not available, restarting application in 61 seconds.....")
-        time.sleep(61)
-        print('Restarting application........')
-        main()
+        return True
+    else:
+        return False
