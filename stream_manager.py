@@ -18,8 +18,11 @@ from inference_video import inf_run
 
 
 def restart_nssm_service(service_name):
-    command = f'nssm restart {service_name}'
-    subprocess.run(command, shell=True)
+    command = fr'C:\nssm224\win64\nssm.exe restart {service_name}'
+    try:
+        subprocess.run(command, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"An error occurred while restarting the service: {e}")
 
 
 def probe_stream(video_path, cam_name):
